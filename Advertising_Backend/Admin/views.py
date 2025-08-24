@@ -12,6 +12,9 @@ from rest_framework.views import APIView
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import generics, permissions
+from .models import Subscription
+from .serializers import SubscriptionSerializer
 from django.contrib.auth import get_user_model
 User=get_user_model()
 
@@ -143,9 +146,7 @@ class YoutubeVideoDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-from rest_framework import generics, permissions
-from .models import Subscription
-from .serializers import SubscriptionSerializer
+
 
 class SubscriptionListCreateView(generics.ListCreateAPIView):
     queryset = Subscription.objects.all()
