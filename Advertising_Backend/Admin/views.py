@@ -2,20 +2,23 @@ from django.shortcuts import render
 
 
 # Create your views here.
-from .models import Category, SubCategory, ImageUpload, YoutubeVideo
-from .serializers import CategorySerializer, EditUserSerializer, SubCategorySerializer, ImageUploadSerializer, YoutubeVideoSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
+from .models import Category, SubCategory, ImageUpload, YoutubeVideo, Carousel
+from .serializers import CategorySerializer, EditUserSerializer, SubCategorySerializer, ImageUploadSerializer, \
+    YoutubeVideoSerializer, CarouselSerializer
+from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
-from rest_framework import generics,status,permissions
+from rest_framework import generics, status, permissions, viewsets
 from rest_framework.views import APIView
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 from rest_framework.permissions import AllowAny,IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from rest_framework import generics, permissions
 from .models import Subscription
 from .serializers import SubscriptionSerializer
 from django.contrib.auth import get_user_model
+
 User=get_user_model()
 
 class RegisterView(generics.CreateAPIView):
@@ -47,12 +50,11 @@ class UserList(generics.ListAPIView):
     permission_classes =  [AllowAny]
 
 
-class EditUserByIdView(generics.RetrieveUpdateAPIView):
+class EditUserByIdView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = EditUserSerializer
     # permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-
+    parser_classes = [MultiPartParser, FormParser,JSONParser]
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -146,24 +148,20 @@ class YoutubeVideoDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-
-
 class SubscriptionListCreateView(generics.ListCreateAPIView):
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        # ensure subscription is linked to the authenticated user
-        # serializer.save(user=self.request.user)
-        subscription = serializer.save(user=self.request.user)
-        subscription.save()  # triggers model save logic to set end_date & is_active
+        serializer.save()    # respects user_id from request data
+  # triggers model save logic to set end_date & is_active
 
 
 class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
         user = self.request.user
@@ -171,3 +169,18 @@ class SubscriptionDetailView(generics.RetrieveUpdateDestroyAPIView):
             # staff/admin can update any subscription
             return Subscription.objects.all()
         return Subscription.objects.filter(user=user)
+
+
+
+
+
+class CarouselListCreateView(generics.ListCreateAPIView):
+    queryset = Carousel.objects.all()
+    serializer_class = CarouselSerializer
+    parser_classes = [MultiPartParser, FormParser]
+
+# Retrieve, update, or delete a single carousel entry
+class CarouselDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Carousel.objects.all()
+    serializer_class = CarouselSerializer
+    parser_classes = [MultiPartParser, FormParser]
